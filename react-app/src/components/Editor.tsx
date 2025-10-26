@@ -86,6 +86,27 @@ export function Editor({
     }
     const htmlData = cd?.getData('text/html') ?? '';
     const textData = cd?.getData('text/plain') ?? '';
+
+    // 提醒：检测到本地图片路径（HTML 或 Markdown），不阻止粘贴
+    try {
+      const localInHtml = !!htmlData && (/file:\/\//i.test(htmlData) || /src\s*=\s*["']\s*file:/i.test(htmlData));
+      const localInMd = (() => {
+        if (!textData) return false;
+        const rx = /!\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)/g;
+        let m: RegExpExecArray | null;
+        while ((m = rx.exec(textData)) !== null) {
+          const url = m[1] || '';
+          const isRemote = /^(https?:|data:|img:\/\/)/i.test(url);
+          const hasImageExt = /\.(png|jpe?g|gif|svg|webp|bmp|tiff?)(?:$|\?)/i.test(url);
+          const looksLocalPrefix = /^(file:\/\/|[a-zA-Z]:[\\\/]|\.\.?[\\\/]|\/.+?)/.test(url);
+          if (!isRemote && (looksLocalPrefix || hasImageExt)) return true;
+        }
+        return false;
+      })();
+      if (localInHtml || localInMd) {
+        onToast('本地图片请直接拖拽文件到编辑器', 'error');
+      }
+    } catch {}
     if (textData && /^\[Image\s*#?\d*\]$/i.test(textData.trim())) {
       e.preventDefault();
       onToast('检测到图片占位文本，请直接粘贴图片或拖拽文件', 'error');
@@ -153,3 +174,4 @@ export function Editor({
     </div>
   );
 }
+
