@@ -14,7 +14,7 @@ export function Header() {
       </div>
       <a
         className="github-link"
-        href="https://github.com/alchaincyf/huasheng_editor"
+        href="https://github.com/Fanxi1992/Markdown_editor_react_version"
         target="_blank"
         rel="noreferrer"
         title="查看源码"
