@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Editor } from './components/Editor';
 import { Preview } from './components/Preview';
 import { Toolbar } from './components/Toolbar';
@@ -7,6 +7,10 @@ import { initMarkdown } from './lib/markdown';
 import { applyInlineStyles, wrapWithContainer } from './lib/htmlStyles';
 import { STYLES } from './lib/styles';
 import { usePreferences } from './state/usePreferences';
+import { ImageStore } from './lib/images/imageStore';
+import { ImageCompressor } from './lib/images/imageCompressor';
+import { resolveImageProtocol } from './lib/images/protocol';
+import { groupConsecutiveImages } from './lib/images/grouping';
 
 function App() {
   const { currentStyle, setCurrentStyle, starredStyles, toggleStarStyle } = usePreferences();
@@ -16,6 +20,16 @@ function App() {
   const [copySuccess, setCopySuccess] = useState(false);
 
   const md = useMemo(() => initMarkdown(), []);
+  const imageStoreRef = useRef(new ImageStore());
+  const imageCompressorRef = useRef(new ImageCompressor({ maxWidth: 1920, maxHeight: 1920, quality: 0.85 }));
+  const imageURLMapRef = useRef<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    imageStoreRef.current.init().catch(() => {
+      setToast({ show: true, message: '图片存储系统初始化失败', type: 'error' });
+      setTimeout(() => setToast({ show: false, message: '' }), 3000);
+    });
+  }, []);
 
   // Render pipeline (simplified baseline)
   useEffect(() => {
@@ -29,8 +43,28 @@ function App() {
       // 1) Markdown -> HTML
       const baseHtml = md.render(markdownInput);
 
-      // 2) Apply style mapping (no image protocol handling yet in baseline)
-      const styled = applyInlineStyles(baseHtml, STYLES[currentStyle].styles);
+      // 2) Replace img:// with blob: from IndexedDB
+      const { html: withImages, usedIds, newUrls } = await resolveImageProtocol(baseHtml, imageStoreRef.current, imageURLMapRef.current);
+
+      // Revoke unused ObjectURLs
+      const oldMap = imageURLMapRef.current;
+      // Assign the new map instance containing current urls
+      const nextMap = new Map<string, string>();
+      newUrls.forEach((url, id) => nextMap.set(id, url));
+      oldMap.forEach((url, id) => {
+        if (!usedIds.has(id)) {
+          try { URL.revokeObjectURL(url); } catch {}
+        }
+      });
+      imageURLMapRef.current = nextMap;
+
+      // 3) Group consecutive images to CSS grid for preview
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(withImages, 'text/html');
+      groupConsecutiveImages(doc);
+
+      // 4) Apply style mapping
+      const styled = applyInlineStyles(doc.body.innerHTML, STYLES[currentStyle].styles);
       const wrapped = wrapWithContainer(styled, STYLES[currentStyle].styles.container);
 
       if (!cancelled) setRenderedContent(wrapped);
@@ -69,6 +103,8 @@ function App() {
           setToast({ show: true, message: msg, type });
           setTimeout(() => setToast({ show: false, message: '' }), 3000);
         }}
+        imageStore={imageStoreRef.current}
+        imageCompressor={imageCompressorRef.current}
       />
 
       <Preview html={renderedContent} />
@@ -81,4 +117,3 @@ function App() {
 }
 
 export default App;
-
