@@ -11,6 +11,7 @@ import { ImageStore } from './lib/images/imageStore';
 import { ImageCompressor } from './lib/images/imageCompressor';
 import { resolveImageProtocol } from './lib/images/protocol';
 import { groupConsecutiveImages } from './lib/images/grouping';
+import { copyForWeChat } from './lib/wechatCopy';
 
 function App() {
   const { currentStyle, setCurrentStyle, starredStyles, toggleStarStyle } = usePreferences();
@@ -80,18 +81,19 @@ function App() {
         starred={starredStyles}
         toggleStar={toggleStarStyle}
         canCopy={!!renderedContent}
-        onCopy={() => {
-          // Placeholder: copy logic implemented later
+        onCopy={async () => {
           if (!renderedContent) return;
-          navigator.clipboard.writeText(renderedContent).then(() => {
+          try {
+            setToast({ show: true, message: '正在处理图片并复制...', type: 'success' });
+            const { successCount, failCount } = await copyForWeChat(renderedContent, STYLES[currentStyle].styles, imageStoreRef.current);
             setCopySuccess(true);
-            setToast({ show: true, message: '已复制（临时为纯文本/HTML源码）', type: 'success' });
+            setToast({ show: true, message: failCount > 0 ? `已复制（图片成功 ${successCount}，失败 ${failCount}）` : '已复制到剪贴板', type: failCount > 0 ? 'error' : 'success' });
             setTimeout(() => setCopySuccess(false), 2000);
-            setTimeout(() => setToast({ show: false, message: '' }), 3000);
-          }).catch(() => {
+          } catch (e) {
             setToast({ show: true, message: '复制失败', type: 'error' });
+          } finally {
             setTimeout(() => setToast({ show: false, message: '' }), 3000);
-          });
+          }
         }}
         charCount={markdownInput.length}
       />
