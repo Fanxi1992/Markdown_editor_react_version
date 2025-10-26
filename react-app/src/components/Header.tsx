@@ -10,7 +10,7 @@ export function Header() {
           <rect x="6" y="24" width="20" height="2" rx="1" fill="white" opacity="0.7"/>
         </svg>
         <span>公众号排版器（React）</span>
-        <span className="creator-info">Created by <a href="https://huasheng.ai" target="_blank" rel="noopener noreferrer">华晟</a></span>
+        <span className="creator-info">Created by <a href="https://huasheng.ai" target="_blank" rel="noopener noreferrer">SF</a></span>
       </div>
       <a
         className="github-link"
