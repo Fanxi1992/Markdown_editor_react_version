@@ -4,6 +4,7 @@ import { Preview } from './components/Preview';
 import { Toolbar } from './components/Toolbar';
 import { Toast } from './components/Toast';
 import { Header } from './components/Header';
+import { PreviewHeader } from './components/PreviewHeader';
 import { initMarkdown } from './lib/markdown';
 import { applyInlineStyles, wrapWithContainer } from './lib/htmlStyles';
 import { STYLES } from './lib/styles';
@@ -91,50 +92,57 @@ function App() {
   }, [markdownInput, currentStyle, md]);
 
   return (
-    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto 1fr', height: '100vh', background: '#fafafa'}}>
+    <div id="app">
       <Header />
+
       <Toolbar
         styleKey={currentStyle}
         setStyleKey={setCurrentStyle}
         starred={starredStyles}
-        toggleStar={toggleStarStyle}
-        canCopy={!!renderedContent}
-        onCopy={async () => {
-          if (!renderedContent) return;
-          try {
-            setToast({ show: true, message: '准备复制到公众号...', type: 'success' });
-            const { successCount, failCount } = await copyForWeChat(
-              renderedContent,
-              STYLES[currentStyle].styles,
-              imageStoreRef.current,
-              (msg) => setToast({ show: true, message: msg, type: 'success' })
-            );
-            setCopySuccess(true);
-            setToast({ show: true, message: failCount > 0 ? `已复制（图片成功 ${successCount}，失败 ${failCount}）` : '已复制到剪贴板', type: failCount > 0 ? 'error' : 'success' });
-            setTimeout(() => setCopySuccess(false), 2000);
-          } catch (e) {
-            const msg = String((e as any)?.message || e);
-            setToast({ show: true, message: msg, type: 'error' });
-          } finally {
+      />
+
+      <div className="main-content">
+        <Editor
+          value={markdownInput}
+          onChange={setMarkdownInput}
+          onToast={(msg, type) => {
+            setToast({ show: true, message: msg, type });
             setTimeout(() => setToast({ show: false, message: '' }), 3000);
-          }
-        }}
-        charCount={markdownInput.length}
-      />
+          }}
+          imageStore={imageStoreRef.current}
+          imageCompressor={imageCompressorRef.current}
+          charCount={markdownInput.length}
+        />
 
-      <Editor
-        value={markdownInput}
-        onChange={setMarkdownInput}
-        onToast={(msg, type) => {
-          setToast({ show: true, message: msg, type });
-          setTimeout(() => setToast({ show: false, message: '' }), 3000);
-        }}
-        imageStore={imageStoreRef.current}
-        imageCompressor={imageCompressorRef.current}
-        charCount={markdownInput.length}
-      />
-
-      <Preview html={renderedContent} />
+        <div className="preview-panel">
+          <PreviewHeader
+            canCopy={!!renderedContent}
+            isStarred={starredStyles.includes(currentStyle)}
+            onToggleStar={() => toggleStarStyle(currentStyle)}
+            onCopy={async () => {
+              if (!renderedContent) return;
+              try {
+                setToast({ show: true, message: '准备复制到公众号...', type: 'success' });
+                const { successCount, failCount } = await copyForWeChat(
+                  renderedContent,
+                  STYLES[currentStyle].styles,
+                  imageStoreRef.current,
+                  (msg) => setToast({ show: true, message: msg, type: 'success' })
+                );
+                setCopySuccess(true);
+                setToast({ show: true, message: failCount > 0 ? `已复制（图片成功 ${successCount}，失败 ${failCount}）` : '已复制到剪贴板', type: failCount > 0 ? 'error' : 'success' });
+                setTimeout(() => setCopySuccess(false), 2000);
+              } catch (e) {
+                const msg = String((e as any)?.message || e);
+                setToast({ show: true, message: msg, type: 'error' });
+              } finally {
+                setTimeout(() => setToast({ show: false, message: '' }), 3000);
+              }
+            }}
+          />
+          <Preview html={renderedContent} />
+        </div>
+      </div>
 
       <Toast open={toast.show} type={toast.type}>
         {toast.message}

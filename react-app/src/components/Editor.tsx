@@ -145,8 +145,8 @@ export function Editor({
   const onDragLeave = useCallback((e: React.DragEvent<HTMLTextAreaElement>) => { e.preventDefault(); setDragOver(false); }, []);
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', borderRight: '1px solid #eee'}}>
-      <div style={{padding: 12}}>
+    <div className="editor-panel">
+      <div className="markdown-input-container">
         <textarea
           ref={textareaRef}
           value={value}
@@ -157,19 +157,27 @@ export function Editor({
           onDragEnter={onDragEnter}
           onDragLeave={onDragLeave}
           spellCheck={false}
-          placeholder="# 在此粘贴或输入 Markdown 内容"
-          style={{width: '100%', height: 'calc(100vh - 120px)', border: '1px solid #eee', outline: 'none', padding: 16, borderRadius: 8, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas', fontSize: 14, lineHeight: 1.6, background: dragOver ? '#f4f8ff' : '#fff'}}
+          placeholder="# 在此粘贴或输入 Markdown 内容\n\n## 功能亮点\n\n- 实时预览，所见即所得\n- 多套样式，一键切换\n- 支持从飞书、Notion、Word 直接粘贴\n- 粘贴/拖拽图片自动上传与压缩\n- 一键复制到公众号\n\n提示：可直接粘贴图片或拖拽图片文件到编辑框"
+          className={["markdown-input", dragOver ? 'drag-over' : ''].filter(Boolean).join(' ')}
         />
       </div>
-      <div style={{display: 'flex', alignItems: 'center', padding: '8px 12px', borderTop: '1px solid #eee', gap: 12, justifyContent: 'space-between'}}>
-        <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
-          <label style={{display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer'}}>
-            <input type="file" accept=".md,.markdown" onChange={onFileChange} style={{display: 'none'}} />
+      <div className="editor-footer">
+        <div className="upload-section">
+          <label className="upload-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
             <span>上传 MD 文件</span>
+            <input type="file" accept=".md,.markdown" onChange={onFileChange} style={{display: 'none'}} />
           </label>
-          <div style={{fontSize: 12, color: '#999'}}>支持 .md / .markdown 文件；支持从飞书、Notion、Word 等直接粘贴，自动转为 Markdown</div>
+          <div className="upload-hints">
+            <span className="upload-hint">支持 .md / .markdown 文件</span>
+            <span className="feishu-hint">支持从飞书、Notion、Word 直接粘贴，自动转为 Markdown</span>
+          </div>
         </div>
-        <div style={{fontSize: 12, color: '#666'}}>{charCount} 字符</div>
+        <div className="char-count">{charCount} 字符</div>
       </div>
     </div>
   );
