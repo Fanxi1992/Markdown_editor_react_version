@@ -3,11 +3,61 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>公众号排版器（React）</title>
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0ea5e9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0b" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="React Markdown 编辑与公众号排版器：支持粘贴/导入、图片压缩与本地存储、多套精美样式、一键复制到公众号。" />
+    <meta name="application-name" content="公众号排版器" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <title>公众号排版器 | React Markdown</title>
+
+    <!-- Favicon: SVG（浅色） -->
+    <link rel="icon" type="image/svg+xml" media="(prefers-color-scheme: light)"
+      href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%230ea5e9'/><stop offset='1' stop-color='%232563eb'/></linearGradient></defs><rect x='4' y='4' width='56' height='56' rx='14' fill='url(%23g)'/><text x='32' y='40' text-anchor='middle' font-size='28' fill='%23fff' font-family='Segoe UI,system-ui,-apple-system,Arial,Noto Sans SC'>文</text></svg>" />
+    <!-- Favicon: SVG（深色） -->
+    <link rel="icon" type="image/svg+xml" media="(prefers-color-scheme: dark)"
+      href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2338bdf8'/><stop offset='1' stop-color='%231e40af'/></linearGradient></defs><rect x='4' y='4' width='56' height='56' rx='14' fill='url(%23g)'/><text x='32' y='40' text-anchor='middle' font-size='28' fill='%23f8fafc' font-family='Segoe UI,system-ui,-apple-system,Arial,Noto Sans SC'>文</text></svg>" />
+    <!-- 兼容旧浏览器的快捷方式图标（同 SVG） -->
+    <link rel="shortcut icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%230ea5e9'/><stop offset='1' stop-color='%232563eb'/></linearGradient></defs><rect x='4' y='4' width='56' height='56' rx='14' fill='url(%23g)'/><text x='32' y='40' text-anchor='middle' font-size='28' fill='%23fff' font-family='Segoe UI,system-ui,-apple-system,Arial,Noto Sans SC'>文</text></svg>" />
+
+    <!-- Open Graph（分享预览） -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="公众号排版器 | React Markdown" />
+    <meta property="og:description" content="支持粘贴/导入、图片压缩与本地存储、多套精美样式、一键复制到公众号。" />
+
+    <style>
+      html, body, #root { height: 100%; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #fafafa; }
+      @media (prefers-color-scheme: dark) { body { background: #0b0b0b; } }
+
+      /* 首屏加载占位，React 挂载后会被替换 */
+      .app-loader { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #222; }
+      .app-logo { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg,#0ea5e9,#2563eb); box-shadow: 0 6px 16px rgba(2,6,23,.12); }
+      .app-title { font-weight: 700; letter-spacing: .02em; }
+      .app-sub { font-size: 12px; color: #9aa1a9; }
+      .app-spin { width: 18px; height: 18px; border: 2px solid #e5e7eb; border-top-color: #0ea5e9; border-radius: 999px; animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-color-scheme: dark) {
+        .app-loader { color: #e5e7eb; }
+        .app-sub { color: #6b7280; }
+        .app-logo { box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+        .app-spin { border-color: #374151; border-top-color: #38bdf8; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="app-loader" role="status" aria-live="polite">
+        <div class="app-logo" aria-hidden="true"></div>
+        <div class="app-title">公众号排版器</div>
+        <div class="app-sub">正在加载应用…</div>
+        <div class="app-spin" aria-hidden="true"></div>
+      </div>
+      <noscript>需要启用 JavaScript 才能运行本应用。</noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
   </html>
-
