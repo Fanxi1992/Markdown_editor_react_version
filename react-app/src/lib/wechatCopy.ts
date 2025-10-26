@@ -2,7 +2,14 @@ import { copyHtmlAndText } from './clipboard';
 import type { StyleMap } from './styles';
 import { ImageStore } from './images/imageStore';
 
-export async function copyForWeChat(html: string, style: StyleMap, imageStore: ImageStore) {
+export type CopyProgress = (message: string) => void;
+
+export async function copyForWeChat(
+  html: string,
+  style: StyleMap,
+  imageStore: ImageStore,
+  onProgress?: CopyProgress
+) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
@@ -10,7 +17,7 @@ export async function copyForWeChat(html: string, style: StyleMap, imageStore: I
   convertGridToTable(doc);
 
   // 2) inline images as Base64
-  const { successCount, failCount } = await inlineAllImages(doc, imageStore);
+  const { successCount, failCount } = await inlineAllImages(doc, imageStore, onProgress);
 
   // 3) wrap with section if container background is not white
   const containerStyle = style.container || '';
@@ -45,7 +52,16 @@ export async function copyForWeChat(html: string, style: StyleMap, imageStore: I
 
   const processedHTML = doc.body.innerHTML;
   const plain = doc.body.textContent || '';
-  await copyHtmlAndText(processedHTML, plain);
+  try {
+    onProgress?.('正在写入剪贴板...');
+    await copyHtmlAndText(processedHTML, plain);
+  } catch (e: any) {
+    const msg = String(e?.message || e);
+    // 给出常见原因的友好提示
+    const hints =
+      '复制失败：请确保在 HTTPS 或 localhost 环境下，并授予剪贴板权限。部分浏览器需用户交互后才能写入剪贴板。';
+    throw new Error(`${msg}. ${hints}`);
+  }
 
   return { successCount, failCount };
 }
@@ -151,36 +167,52 @@ export function convertGridToTable(doc: Document) {
   });
 }
 
-async function inlineAllImages(doc: Document, imageStore: ImageStore) {
+async function inlineAllImages(doc: Document, imageStore: ImageStore, onProgress?: CopyProgress) {
   const imgs = Array.from(doc.querySelectorAll('img')) as HTMLImageElement[];
   let successCount = 0;
   let failCount = 0;
 
-  await Promise.all(
-    imgs.map(async (img) => {
-      try {
-        const src = img.getAttribute('src') || '';
-        if (src.startsWith('data:')) { successCount++; return; }
-        const id = img.getAttribute('data-image-id');
-        let blob: Blob | null = null;
-        if (id) {
-          try { blob = await imageStore.getImageBlob(id); } catch {}
-        }
-        if (!blob) {
-          const resp = await fetch(src, { mode: 'cors', cache: 'default' });
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          blob = await resp.blob();
-        }
-        const base64 = await blobToDataURL(blob!);
-        img.setAttribute('src', base64);
-        successCount++;
-      } catch {
-        failCount++;
+  const total = imgs.length;
+  for (let i = 0; i < imgs.length; i++) {
+    const img = imgs[i];
+    onProgress?.(`正在处理图片 ${i + 1}/${total}...`);
+    try {
+      const src = img.getAttribute('src') || '';
+      if (src.startsWith('data:')) { successCount++; continue; }
+      const id = img.getAttribute('data-image-id');
+      let blob: Blob | null = null;
+      if (id) {
+        try { blob = await imageStore.getImageBlob(id); } catch {}
       }
-    })
-  );
+      if (!blob) {
+        blob = await fetchWithRetry(src, 2, 350);
+      }
+      const base64 = await blobToDataURL(blob!);
+      img.setAttribute('src', base64);
+      successCount++;
+    } catch {
+      failCount++;
+      // 失败时保留原链接，并提示用户
+      onProgress?.(`第 ${i + 1} 张图片转换失败，已保留原链接`);
+    }
+  }
 
   return { successCount, failCount };
+}
+
+async function fetchWithRetry(url: string, retries = 1, backoffMs = 300): Promise<Blob> {
+  let lastErr: any;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const resp = await fetch(url, { mode: 'cors', cache: 'default' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return await resp.blob();
+    } catch (e) {
+      lastErr = e;
+      if (i < retries) await new Promise(r => setTimeout(r, backoffMs));
+    }
+  }
+  throw lastErr ?? new Error('图片下载失败');
 }
 
 function blobToDataURL(blob: Blob) {
@@ -191,4 +223,3 @@ function blobToDataURL(blob: Blob) {
     reader.readAsDataURL(blob);
   });
 }
-

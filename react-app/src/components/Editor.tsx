@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ImageCompressor } from '../lib/images/imageCompressor';
 import { ImageStore } from '../lib/images/imageStore';
-import { initTurndown, isMarkdown } from '../lib/paste';
+import { initTurndown, isMarkdown, isIDEFormattedHTML } from '../lib/paste';
 
 export function Editor({
   value,
@@ -91,6 +91,10 @@ export function Editor({
       onToast('检测到图片占位文本，请直接粘贴图片或拖拽文件', 'error');
       return;
     }
+    // IDE/代码编辑器 HTML：直接保留纯文本（避免过度转换）
+    if (htmlData && htmlData.trim() !== '' && isIDEFormattedHTML(htmlData, textData)) {
+      return; // 使用浏览器默认粘贴行为
+    }
     if (htmlData && htmlData.trim() !== '' && !isMarkdown(textData)) {
       try {
         e.preventDefault();
@@ -149,4 +153,3 @@ export function Editor({
     </div>
   );
 }
-

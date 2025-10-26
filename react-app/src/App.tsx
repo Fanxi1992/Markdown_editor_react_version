@@ -102,13 +102,19 @@ function App() {
         onCopy={async () => {
           if (!renderedContent) return;
           try {
-            setToast({ show: true, message: '正在处理图片并复制...', type: 'success' });
-            const { successCount, failCount } = await copyForWeChat(renderedContent, STYLES[currentStyle].styles, imageStoreRef.current);
+            setToast({ show: true, message: '准备复制到公众号...', type: 'success' });
+            const { successCount, failCount } = await copyForWeChat(
+              renderedContent,
+              STYLES[currentStyle].styles,
+              imageStoreRef.current,
+              (msg) => setToast({ show: true, message: msg, type: 'success' })
+            );
             setCopySuccess(true);
             setToast({ show: true, message: failCount > 0 ? `已复制（图片成功 ${successCount}，失败 ${failCount}）` : '已复制到剪贴板', type: failCount > 0 ? 'error' : 'success' });
             setTimeout(() => setCopySuccess(false), 2000);
           } catch (e) {
-            setToast({ show: true, message: '复制失败', type: 'error' });
+            const msg = String((e as any)?.message || e);
+            setToast({ show: true, message: msg, type: 'error' });
           } finally {
             setTimeout(() => setToast({ show: false, message: '' }), 3000);
           }
