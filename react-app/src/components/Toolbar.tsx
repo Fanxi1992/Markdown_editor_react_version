@@ -18,32 +18,45 @@ export function Toolbar({
   onCopy: () => void;
   charCount: number;
 }) {
+  const recommended = new Set(['nikkei', 'wechat-anthropic', 'wechat-ft', 'wechat-nyt', 'latepost-depth', 'wechat-tech']);
   return (
-    <div style={{gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid #eee'}}>
-      <div style={{display: 'flex', gap: 8, alignItems: 'center', overflowX: 'auto'}}>
-        <div style={{fontSize: 12, color: '#999'}}>样式</div>
-        {Object.entries(STYLES).map(([key, cfg]) => (
-          <button
-            key={key}
-            onClick={() => setStyleKey(key as keyof typeof STYLES)}
-            style={{
-              padding: '6px 10px',
-              border: '1px solid',
-              borderColor: styleKey === key ? '#06f' : '#eee',
-              background: styleKey === key ? '#06f' : '#fff',
-              color: styleKey === key ? '#fff' : '#333',
-              borderRadius: 6,
-              cursor: 'pointer'
-            }}
-            title={cfg.name}
-          >
-            {cfg.name}
-            {starred.includes(key) ? ' ★' : ''}
-          </button>
-        ))}
+    <div style={{gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: '1px solid #eee', background: '#fff'}}>
+      <div style={{display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', paddingBottom: 2}}>
+        <div style={{fontSize: 12, color: '#999', flex: '0 0 auto'}}>选择样式</div>
+        {Object.entries(STYLES).map(([key, cfg]) => {
+          const active = styleKey === (key as keyof typeof STYLES);
+          const isStar = starred.includes(key);
+          const isRec = recommended.has(key);
+          return (
+            <div key={key} style={{position: 'relative', flex: '0 0 auto'}}>
+              <button
+                onClick={() => setStyleKey(key as keyof typeof STYLES)}
+                style={{
+                  padding: '6px 10px',
+                  border: '1px solid',
+                  borderColor: active ? '#06f' : '#e6e6e6',
+                  background: active ? '#06f' : '#fff',
+                  color: active ? '#fff' : '#333',
+                  borderRadius: 999,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+                title={cfg.name}
+              >
+                {cfg.name}
+              </button>
+              {isRec && (
+                <span style={{position: 'absolute', top: -6, right: -6, fontSize: 10}}>✨</span>
+              )}
+              {isStar && (
+                <span style={{position: 'absolute', bottom: -6, right: -6, fontSize: 10}}>★</span>
+              )}
+            </div>
+          );
+        })}
         <button
           onClick={() => toggleStar(styleKey)}
-          style={{padding: '6px 10px', border: '1px solid #eee', background: '#fff', borderRadius: 6, cursor: 'pointer'}}
+          style={{padding: '6px 10px', border: '1px solid #eee', background: '#fff', borderRadius: 999, cursor: 'pointer'}}
           title="收藏当前样式"
         >
           {starred.includes(styleKey) ? '取消收藏' : '收藏样式'}
@@ -51,7 +64,6 @@ export function Toolbar({
       </div>
 
       <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
-        <div style={{fontSize: 12, color: '#666'}}>{charCount} 字符</div>
         <button
           onClick={onCopy}
           disabled={!canCopy}
@@ -70,4 +82,3 @@ export function Toolbar({
     </div>
   );
 }
-

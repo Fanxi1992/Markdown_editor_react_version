@@ -34,3 +34,5 @@ export function initTurndown() {
   return td;
 }
 
+// Simple heuristics to detect IDE-like HTML is omitted for now; we rely on
+// isMarkdown to bypass conversion when plain text already looks like MD.

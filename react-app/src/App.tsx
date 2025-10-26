@@ -3,6 +3,7 @@ import { Editor } from './components/Editor';
 import { Preview } from './components/Preview';
 import { Toolbar } from './components/Toolbar';
 import { Toast } from './components/Toast';
+import { Header } from './components/Header';
 import { initMarkdown } from './lib/markdown';
 import { applyInlineStyles, wrapWithContainer } from './lib/htmlStyles';
 import { STYLES } from './lib/styles';
@@ -33,6 +34,22 @@ function App() {
   }, []);
 
   // Render pipeline (simplified baseline)
+  useEffect(() => {
+    // Load saved markdown
+    try {
+      const saved = localStorage.getItem('markdownInput');
+      if (saved) setMarkdownInput(saved);
+    } catch {}
+  }, []);
+
+  // Debounced save markdown
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try { localStorage.setItem('markdownInput', markdownInput); } catch {}
+    }, 600);
+    return () => clearTimeout(t);
+  }, [markdownInput]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -74,7 +91,8 @@ function App() {
   }, [markdownInput, currentStyle, md]);
 
   return (
-    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto 1fr', height: '100vh'}}>
+    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'auto auto 1fr', height: '100vh', background: '#fafafa'}}>
+      <Header />
       <Toolbar
         styleKey={currentStyle}
         setStyleKey={setCurrentStyle}
@@ -107,6 +125,7 @@ function App() {
         }}
         imageStore={imageStoreRef.current}
         imageCompressor={imageCompressorRef.current}
+        charCount={markdownInput.length}
       />
 
       <Preview html={renderedContent} />
